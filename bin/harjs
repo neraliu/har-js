@@ -1,0 +1,50 @@
+#!/usr/bin/env node
+/* 
+Copyright (c) 2018, All rights reserved.
+Copyrights licensed under the New BSD License.
+See the accompanying LICENSE file for terms.
+
+Authors: Nera Liu <neraliu@gmail.com>
+*/
+(function() {
+
+  function printUsage() {
+    console.log("Usage: harjs --file <har-filename>");
+    console.log("\t\t--list_urls\t\tList the URL in the har file.");
+    console.log("\t\t--dedup_urls\t\tDeduplicate the URL for display. (Only the first url will be displayed)");
+    console.log("\t\t--regex_urls <regex pattern>\t\tFilter the URL based on regular expression.");
+    console.log("\t\t--print_req\t\tPrint the HTTP request header.");
+    console.log("\t\t--print_resp\t\tPrint the HTTP response header.");
+    console.log("\t\t--print_resp_code\t\tPrint the HTTP response code.");
+    console.log("\t\t--print_curl\t\tPrint the URL in the CURL format for replay.");
+  }
+
+	const fs = require('fs'),
+        harAnalyzer = require('../src/harjs.js');
+
+	let argv = require('minimist')(process.argv.slice(1)),
+	    filename = argv.file;
+	let analyzePromise = new Promise(function(resolve, reject) {
+		if (filename !== undefined) {
+			resolve(filename);
+		} else {
+			reject();
+		}
+	}).catch(function() {
+		printUsage();
+		process.exit();
+	}).then(function(filename) {
+		console.log("[harjs] reading " + filename);
+		let jsondata = fs.readFileSync(filename);
+		let har = JSON.parse(jsondata);
+		return har;
+	}).catch(function() {
+		console.log("[harjs] fail to read " + filename);
+		process.exit();
+	}).then(function(obj) {
+    harAnalyzer.process(obj, argv);
+	}).catch(function() {
+		console.log("[harjs] fail to process the har json object");
+	});
+
+}).call(this);
